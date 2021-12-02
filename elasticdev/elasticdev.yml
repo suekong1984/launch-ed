@@ -6,7 +6,7 @@ labels:
      purpose: test
    infrastructure:
      cloud: aws
-     product: mongodb
+     product: k8
 selectors:
    vpc_info:
      match_labels:
@@ -20,19 +20,7 @@ selectors:
      match_params:
        must_exists: True
        resource_type: vpc
-   private_subnet_info:
-     match_labels:
-       car: bmw
-       model: 320i
-       environment: dev
-       app_tier: networking
-     match_keys:
-       provider: aws
-       region: eu-west-1
-       name: private
-     match_params:
-       resource_type: subnet
-   public_subnet_info:
+   subnet_info:
      match_labels:
        car: bmw
        model: 320i
@@ -44,78 +32,26 @@ selectors:
        name: public
      match_params:
        resource_type: subnet
-   sg_database_info:
-     match_labels:
-       car: bmw
-       model: 320i
-       environment: dev
-       app_tier: networking
-     match_keys:
-       provider: aws
-       region: eu-west-1
-       name: database
-     match_params:
-       must_be_one: True
-       resource_type: security_group
-   sg_bastion_info:
-     match_labels:
-       car: bmw
-       model: 320i
-       environment: dev
-       app_tier: networking
-     match_keys:
-       provider: aws
-       region: eu-west-1
-       name: bastion
-     match_params:
-       must_be_one: True
-       resource_type: security_group
 infrastructure:
-   ssh_upload:
-       stack_name: elasticdev:::ec2_ssh_upload
+   eks:
+       stack_name: elasticdev:::aws_eks
        arguments:
-          name: mongodb-cluster-ssh-dev
-          clobber: True
-       credentials:
-           - reference: aws_2
-             orchestration: true
-   replica:
-       stack_name: elasticdev:::mongodb_replica_on_ec2
-       dependencies:
-          - infrastructure::ssh_upload
-       arguments:
-          spot: true
           vpc_name: selector:::vpc_info::name
-          subnet_ids: selector:::private_subnet_info::subnet_id:csv
-          sg_id: selector:::sg_database_info::sg_id
           vpc_id: selector:::vpc_info::vpc_id
-          ami_filter: Name=name,Values=ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*
-          ami_owner: 099720109477 
-          bastion_ami_filter: Name=name,Values=ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*
-          bastion_ami_owner: 099720109477 
-          bastion_sg_id: selector:::sg_bastion_info::sg_id
-          bastion_subnet_ids: selector:::public_subnet_info::subnet_id:csv
-          bastion_config_destroy: true
-          mongodb_cluster: mongodb-cluster-dev
-          hostname_random: true
-          size: t3.micro
-          ssh_key_name: mongodb-cluster-ssh-dev
-          num_of_replicas: 3
-          disksize: 25
-          ip_key: public_ip
-          volume_size: 25
-          volume_mount: /var/lib/mongodb
-          volume_fstype: xfs
-          mongodb_username: admin123
-          mongodb_password: admin123
+          eks_cluster: eval-ed-eks
+          eks_cluster_version: 1.19
+          subnet_ids: selector:::subnet_info::subnet_id:csv
+          eks_min_capacity: 1
+          eks_max_capacity: 1
+          eks_desired_capacity: 1
+       labels:
+          - general
+          - infrastructure
        selectors:
          - vpc_info
-         - public_subnet_info
-         - private_subnet_info
-         - sg_bastion_info
-         - sg_database_info
+         - subnet_info
        credentials:
-           - reference: aws_2
+           - reference: eval-ed-iam
              orchestration: true
 destroy:
    stack_name: elasticdev:::ed_core::callback_delete
