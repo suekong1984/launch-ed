@@ -6,36 +6,18 @@ labels:
      purpose: test
    infrastructure:
      cloud: aws
-     product: vpc
-     app_tier: networking
-   vehicle:
-     car: bmw
-     model: 320i
+     product: iam
 infrastructure:
-   vpc:
-       stack_name: elasticdev:::aws_vpc_and_security_group
+   iam:
+       stack_name: elasticdev:::aws_iam
        arguments:
-         eks_cluster: eval-ed-eks
-         vpc_name: eval-ed-vpc
-         main_network_block: 10.30.0.0/16
-         tier_level: "2"
-         enable_nat_gateway: true
-         single_nat_gateway: true
-         enable_dns_hostnames: true
-         reuse_nat_ips: true
-         one_nat_gateway_per_az: false
-         tags: "mongo,database,stateful"
+          iam_name: eval-ed-iam
+          policy_name: eval-ed-iam
        labels:
-         - general
-         - infrastructure
-         - vehicle
+          - general
+          - infrastructure
        credentials:
-         - reference: eval-ed-iam
-           orchestration: true
-       inputvars:
-         - reference: docker_build
-           delegation: true
+           - reference: aws
+             orchestration: true
 destroy:
    stack_name: elasticdev:::ed_core::callback_delete
-   arguments:
-       parallel: null
