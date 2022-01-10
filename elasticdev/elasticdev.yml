@@ -32,9 +32,6 @@ infrastructure:
        credentials:
          - reference: eval-ed-iam
            orchestration: true
-       inputvars:
-         - reference: docker_build
-           delegation: true
 destroy:
    stack_name: elasticdev:::ed_core::callback_delete
    arguments:
